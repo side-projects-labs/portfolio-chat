@@ -15,3 +15,9 @@
 - `docs/TECHNICAL_CHAT_PROMPTS.md`: 기술 채팅 프롬프트 문서
 
 어디까지 옮길지, 공통 UI와 타입 같은 의존성을 어떻게 나눌지는 아직 정하지 않았습니다.
+
+## 개발 지침
+
+- [공통 지침](AGENTS.md): 공개 저장소의 안전 규칙, 코드 이전 원칙, 브랜치·커밋·PR·이슈 규칙
+- 공통 스킬: [tdd](.agents/skills/tdd/SKILL.md), [commit](.agents/skills/commit/SKILL.md), [pr](.agents/skills/pr/SKILL.md), [qa](.agents/skills/qa/SKILL.md), [review](.agents/skills/review/SKILL.md), [issue](.agents/skills/issue/SKILL.md)
+- PR과 이슈 본문은 [PR 템플릿](.github/pull_request_template.md), [이슈 템플릿](.github/ISSUE_TEMPLATE.md)을 모두 채웁니다.

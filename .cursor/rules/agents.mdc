@@ -1,0 +1,23 @@
+---
+description: 모든 작업 전에 저장소 공통 에이전트 지침(AGENTS.md)과 스킬을 따르도록 안내
+alwaysApply: true
+---
+
+# 에이전트 지침 진입점
+
+이 저장소의 지침 원본은 루트의 `AGENTS.md`입니다. 작업을 시작하기 전에 반드시 `AGENTS.md` 전체를 읽고 따릅니다.
+
+필수 스킬 (`.agents/skills/<name>/SKILL.md`, 작업 전에 해당 파일을 읽고 절차를 그대로 따름):
+
+- 공개 저장소입니다. 비밀값·키·인증서·개인정보·실제 사용자 대화를 커밋하지 않고, AI 호출 키는 서버에서만 읽습니다.
+- 기술 스택과 실행 명령은 아직 정해지지 않았습니다. `package.json`에 실제로 있는 스크립트만 쓰고 실행하지 못한 검증은 통과로 보고하지 않습니다.
+- 코드 수정 → `tdd` (테스트를 먼저 작성하고 Red를 확인)
+- 커밋 → `commit` (사용자가 요청할 때만. 코드 변경은 커밋 직전 `review` staged, 🔴 있으면 중단)
+- PR 생성 → `pr` (사용자가 요청할 때만. **`.github/pull_request_template.md` 사용 필수**, `--body`·`--body-file`은 템플릿을 자동으로 채우지 않으므로 파일을 읽어 옮겨 적음. 담당자는 `gh` 활성 계정, 생성 후 `review` branch 결과를 PR 댓글로)
+- 검증 → `qa`, 코드 리뷰 기준 → `review` (댓글은 TEMPLATE.md만 작성)
+- 이슈 생성 → `issue` (사용자가 요청할 때만. 본문은 `.github/ISSUE_TEMPLATE.md`. 상태는 조직 Project `@NoCodeBuild` Status의 Todo, In Progress, In Review, Done. 문장은 ~습니다 또는 ~ㅂ니다)
+- 브랜치는 `feat|fix|docs|ci|chore/<이슈번호>-<설명>`, 커밋과 PR 본문에 `Refs #<이슈번호>` (Fixes·Closes 금지). `master`에 직접 커밋하지 않음
+- 머지 → 사용자가 요청했고 최신 리뷰에 🔴가 없을 때만. 지침 변경 PR은 담당자가 직접 머지
+- 라이선스와 `PROJECT.md`는 담당자 확인 없이 추가하지 않음
+
+이 파일과 `AGENTS.md`가 다르면 `AGENTS.md`를 따릅니다.
