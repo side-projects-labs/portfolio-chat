@@ -13,7 +13,7 @@
 ## 2. 사용 중
 
 - [ ] 불확실하면 확신 없는 어조로 말하고, 근거가 없으면 "근거를 찾지 못했다"고 말한다. `[1차, 본문 미대조]` [NN/g](https://nngroup.com/articles/dimensions-of-ai-chatbots)
-- [ ] 질문이 모호하면 추측해서 답하지 않고 되묻는다. 되묻기는 한 번에 한 가지만 묻는다. `[1차, 본문 미대조]` 같은 출처. 한 번에 한 가지만 묻는 규칙과 횟수 상한은 `[가정]`
+- [ ] 질문이 모호하면 추측해서 답하지 않고 되묻는다. `[1차, 본문 미대조]` 같은 출처. 한 번에 한 가지만 묻는 규칙과 되묻기 횟수 상한은 `[가정]`
 - [ ] 긴 답변을 늘리고 줄이는 후속 동작(더 자세히, 더 짧게)을 제공한다. `[1차, 본문 미대조]` [NN/g 확장·축소](https://www.nngroup.com/articles/accordion-editing-apple-picking/) 그러나 칩 형태가 효과적인지는 근거가 없다. `[가정]`
 - [ ] 답변이 길이 제한으로 잘리면 "이어서"를 누르게 한다. 이어 쓰기 요청 사례: [HuggingChat 논의](https://huggingface.co/spaces/huggingchat/chat-ui/discussions/176) `[사례]`
 - [ ] 출처를 눌렀을 때 원문 위치로 이동한다. `[벤더]` [Stack Overflow](https://stackoverflow.blog/2024/09/30/attribution-as-the-foundation-of-developer-trust/)
