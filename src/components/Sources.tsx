@@ -9,8 +9,11 @@ function isHttpUrl(url: string): boolean {
   }
 }
 
-export function Sources({ sources }: { sources: Source[] }) {
+// notFound는 "검색을 했는데 근거가 없었다"는 신호가 있을 때만 켭니다.
+// 검색 단계가 없는 응답에 이 문구를 붙이면 시도하지 않은 일을 실패한 것처럼 보이게 합니다.
+export function Sources({ sources, notFound = false }: { sources: Source[]; notFound?: boolean }) {
   if (sources.length === 0) {
+    if (!notFound) return null;
     return <p className="mt-2 text-xs text-zinc-600 dark:text-zinc-400">근거를 찾지 못했습니다</p>;
   }
   return (
