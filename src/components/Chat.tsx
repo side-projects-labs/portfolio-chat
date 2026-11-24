@@ -22,8 +22,6 @@ function errorText(error: Error | undefined): string {
   return error?.message.includes("rate_limited") ? RATE_LIMITED_ERROR : SAFE_ERROR;
 }
 
-const PORTFOLIO_URL = "https://www.ycseng.com/";
-
 const NEAR_BOTTOM_PX = 80;
 const MAX_INPUT_HEIGHT_PX = 160;
 
@@ -88,12 +86,13 @@ export function Chat({ transport = defaultTransport }: { transport?: ChatTranspo
     <main className="mx-auto flex h-dvh w-full max-w-3xl flex-col pl-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))]">
       <header className="flex items-center justify-between pb-3 pt-[max(1rem,env(safe-area-inset-top))] text-sm text-zinc-600 dark:text-zinc-400">
         <div className="flex items-center gap-2">
-          <a
-            href={PORTFOLIO_URL}
+          <button
+            type="button"
+            onClick={() => window.history.back()}
             className="hover-ghost rounded-lg px-2.5 py-1 pointer-coarse:px-3 pointer-coarse:py-3"
           >
-            <span aria-hidden="true">←</span> 포트폴리오
-          </a>
+            <span aria-hidden="true">←</span> 뒤로
+          </button>
           <h1>기술 멘토 채팅</h1>
         </div>
         <div className="flex items-center gap-2">
