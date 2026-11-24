@@ -88,10 +88,11 @@ export function Chat({ transport = defaultTransport }: { transport?: ChatTranspo
         <div className="flex items-center gap-2">
           <button
             type="button"
+            aria-label="뒤로"
             onClick={() => window.history.back()}
             className="hover-ghost rounded-lg px-2.5 py-1 pointer-coarse:px-3 pointer-coarse:py-3"
           >
-            <span aria-hidden="true">←</span> 뒤로
+            <span aria-hidden="true">←</span>
           </button>
           <h1>기술 멘토 채팅</h1>
         </div>
