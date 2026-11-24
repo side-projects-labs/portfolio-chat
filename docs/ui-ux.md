@@ -56,7 +56,7 @@
 
 ## 6. 컴포넌트 후보
 
-스택을 정하지 않았으므로 아래는 후보 목록일 뿐이며 채택 여부는 2단계 이슈에서 평가한다.
+이슈 #6에서 Next.js, Vercel AI SDK, AI Elements를 쓰기로 했다. 이는 담당자의 선택이며 다른 후보와 비교해 평가한 결과가 아니다. assistant-ui는 쓰지 않는다.
 
 - Vercel AI Elements `[벤더]` [출처](https://vercel.com/blog/introducing-ai-elements)
 - assistant-ui [출처](https://github.com/assistant-ui/assistant-ui)
