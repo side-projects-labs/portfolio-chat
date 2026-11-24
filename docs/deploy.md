@@ -18,11 +18,13 @@
 - Vercel의 Git 연동은 쓰지 않으며(`vercel.json`의 `git.deploymentEnabled: false`) 배포는 `deploy.yml`만 합니다.
 - 동시에 여러 번 push하면 배포는 한 번에 하나씩만 실행되고 진행 중인 배포는 취소하지 않습니다. 대기 중인 실행이 여럿이면 GitHub가 가장 최근 것만 남깁니다.
 
-### PR에서 배포하지 않는 결정의 영향
+### Preview를 쓰지 않는 결정과 그 영향
+
+Preview 배포는 사용하지 않습니다(담당자 결정). PR에서는 배포하지 않고 master 병합 후 production에만 배포합니다.
 
 - PR마다 만들어지던 Preview 배포와 URL이 없어집니다. PR에서는 `verify`만 확인할 수 있어, 배포 환경에서의 동작(Vercel 런타임, 환경변수, 요청 제한 저장소)은 **master에 병합된 뒤 production에서 처음 확인**됩니다.
 - `deploy.yml`은 master push에서만 실행되므로 병합 전에는 한 번도 실행해 볼 수 없습니다. 문법은 `actionlint`로 확인했지만 실제 동작은 병합 후 첫 실행에서 드러납니다. 실패하면 Actions의 Re-run으로 다시 실행할 수 있습니다.
-- GitHub Environment `preview`는 이전 실행으로 만들어져 남아 있습니다. 더 쓰지 않으므로 필요하면 저장소 설정에서 지워도 됩니다. 이 저장소의 Vercel Preview 환경변수(`GROQ_API_KEY`, `GROQ_MODEL`)도 더는 쓰이지 않지만 남겨 두었습니다.
+- 이전 PR 실행이 만든 GitHub Environment `preview`와, Vercel의 Preview 환경변수(`GROQ_API_KEY`, `GROQ_MODEL`)는 지웠습니다. Vercel에는 Production 환경변수만 있습니다. Preview를 다시 쓰려면 환경변수를 다시 넣고 워크플로에 배포 job을 추가해야 합니다.
 
 ## 승인 게이트를 쓰지 않는 결정
 
@@ -46,7 +48,7 @@
 | Vercel 프로젝트 `portfolio-chat` 생성·로컬 연동 (`yeon-cheols-projects`, Git 미연결) | 완료 |
 | Node 버전 | `package.json`의 `engines`로 22.x 고정 (새 프로젝트 기본값은 26.x였음). 함수 런타임 `nodejs22.x` 확인 |
 | GitHub 변수 `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID`와 시크릿 `VERCEL_TOKEN` | 등록됨. 워크플로를 나누기 전 PR 실행(Preview 배포)에서 토큰이 유효함을 확인했고, 나눈 뒤의 `deploy.yml`은 아직 실행되지 않음 |
-| Vercel 환경변수 `GROQ_API_KEY`(민감 변수), `GROQ_MODEL` | Production·Preview에 등록됨. 값은 로컬 `.env.local`에서 그대로 복사했고 확인하지 않음. `dreamweaver-ai`와 같은 키라 한쪽의 비용·교체가 다른 쪽에 영향을 줌 |
+| Vercel 환경변수 `GROQ_API_KEY`(민감 변수), `GROQ_MODEL` | Production에만 등록됨(Preview는 쓰지 않아 지움). 값은 로컬 `.env.local`에서 그대로 복사했고 확인하지 않음. `dreamweaver-ai`와 같은 키라 한쪽의 비용·교체가 다른 쪽에 영향을 줌 |
 | 요청 제한 | 공유 저장소(Upstash Redis REST) 지원을 코드에 추가함. **저장소를 만들고 환경변수를 넣기 전에는 인스턴스별 메모리 제한기로 동작** |
 | 배포 후 smoke test | 스크립트와 단계 추가, 개발 컨테이너로 실행 확인. 보호된 배포 URL에는 우회 시크릿이 필요하며 없으면 건너뜀(알림). 이전 Preview 실행에서는 보호로 건너뛰었음 |
 | `deploy.yml`(`production` job, `vercel deploy --prod`) | **한 번도 실행하지 않음 (미검증).** 병합 후 첫 master push에서 처음 실행됨 |
