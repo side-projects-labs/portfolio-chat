@@ -26,6 +26,13 @@ describe("Chat", () => {
     expect(screen.getAllByRole("button", { name: /^예시:/ }).length).toBeGreaterThanOrEqual(3);
   });
 
+  it("헤더에 포트폴리오 메인으로 돌아가는 링크가 있다", () => {
+    setup({ streamText: () => say() });
+    const link = screen.getByRole("link", { name: /포트폴리오/ });
+    expect(link).toHaveAttribute("href", "https://www.ycseng.com/");
+    expect(link).not.toHaveAttribute("target");
+  });
+
   it("질문을 보내면 내 메시지와 스트리밍된 답변을 보여 준다", async () => {
     const user = setup({ streamText: () => say("안녕", "하세요") });
     await user.type(screen.getByRole("textbox", { name: "메시지" }), "인사해 줘");
