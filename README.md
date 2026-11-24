@@ -4,7 +4,34 @@
 
 ## 현재 상태
 
-저장소를 만든 초기 단계입니다. 아직 portfolio2에서 옮겨 온 코드는 없습니다.
+이슈 #6의 첫 구현 단계입니다. 아직 portfolio2에서 옮겨 온 코드는 없습니다.
+
+- 스택: Next.js, Vercel AI SDK, 모델 공급자 Groq (모두 담당자의 선택이며 비교 평가한 결과가 아닙니다)
+- 기준 문서: [docs/ui-ux.md](docs/ui-ux.md), [docs/ux-checklist.md](docs/ux-checklist.md), [docs/adr/0001-architecture.md](docs/adr/0001-architecture.md), [docs/evaluation/questions.md](docs/evaluation/questions.md)
+
+## 실행
+
+`package.json`의 스크립트를 쓰고 패키지 매니저는 pnpm입니다.
+
+| 명령 | 용도 |
+| --- | --- |
+| `pnpm dev` | 개발 서버 |
+| `pnpm test` | 테스트(vitest) |
+| `pnpm lint` | ESLint |
+| `pnpm typecheck` | 타입 검사 |
+| `pnpm build` | 프로덕션 빌드 |
+
+개발 서버를 컨테이너로 띄우려면 다음을 씁니다. 이미지에는 환경변수를 넣지 않고 실행할 때 `.env.local`을 주입합니다.
+
+| 명령 | 용도 |
+| --- | --- |
+| `docker compose up -d --build` | 이미지를 만들고 `portfolio-chat-dev` 컨테이너를 실행 (http://localhost:3000) |
+| `docker compose logs -f web` | 로그 확인 |
+| `docker compose down` | 컨테이너 중지·삭제 (볼륨 포함은 `-v`) |
+
+배포는 GitHub Actions와 Vercel로 합니다. 설정과 주의점은 [docs/deploy.md](docs/deploy.md)를 봅니다.
+
+환경변수는 서버에서만 읽습니다. `.env.example`을 참고해 `.env.local`을 만들고 커밋하지 않습니다.
 
 ## 분리 대상 (portfolio2 기준, 확인한 경로)
 

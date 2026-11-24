@@ -17,3 +17,7 @@ coverage/
 # 로그·OS 파일
 *.log
 .DS_Store
+
+# Next.js 생성 파일
+next-env.d.ts
+*.tsbuildinfo

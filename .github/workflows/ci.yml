@@ -1,0 +1,37 @@
+# CI: lint·타입·테스트·빌드를 검증합니다. 배포는 하지 않습니다(배포는 deploy.yml).
+#   - PR: 검증 (시크릿 없이 실행하므로 포크 PR도 실행)
+#   - deploy.yml이 master push에서 이 워크플로를 호출해 검증 통과를 배포 조건으로 씁니다(workflow_call)
+# 공개 저장소이므로 pull_request_target은 쓰지 않고, 이 워크플로에는 시크릿이 없습니다.
+# 액션은 공급망 공격을 막기 위해 커밋 SHA로 고정합니다(주석은 해당 태그).
+name: CI
+
+on:
+  pull_request:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    # PR에서는 새 커밋이 오면 이전 실행을 취소하고, 배포 전 검증(workflow_call)은 취소하지 않습니다.
+    concurrency:
+      group: ci-${{ github.ref }}
+      cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115 # v6.1.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm lint
+      - run: pnpm typecheck
+      - run: pnpm test
+      # 빌드에는 AI 키가 필요 없습니다. 키는 런타임에 서버에서만 읽습니다.
+      - run: pnpm build

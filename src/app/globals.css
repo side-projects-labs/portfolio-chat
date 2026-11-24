@@ -1,0 +1,167 @@
+@import "tailwindcss";
+
+/* html의 .dark 클래스로 다크 모드를 정합니다. 클래스는 첫 페인트 전 스크립트와 ThemeToggle이 맞춥니다. */
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+  /* 포커스 링: 배경과 3:1 이상 (라이트 sky-700 5.9:1, 다크 sky-400 9.2:1) */
+  --focus: #0369a1;
+  --hover-bg: #f4f4f5;
+  --hover-card-bg: #fafafa;
+  --hover-card-border: #a1a1aa;
+  /* 우리 서비스 전용 커서: 기본은 브랜드 색 화살표, 누를 수 있는 요소는 반짝이(AI)가 붙은 화살표. 이미지가 안 되면 기본 커서로 돌아갑니다. */
+  --cursor-default: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2232%22 height=%2232%22 viewBox=%220 0 32 32%22%3E%3Cpath d=%22M4 2.5 L4 23 L9.2 18.2 L12.8 26.2 L16.6 24.6 L13.1 16.8 L20.4 16.8 Z%22 fill=%22%230369a1%22 stroke=%22%23ffffff%22 stroke-width=%221.6%22 stroke-linejoin=%22round%22/%3E%3C/svg%3E") 4 3, default;
+  --cursor-pointer: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2232%22 height=%2232%22 viewBox=%220 0 32 32%22%3E%3Cpath d=%22M4 2.5 L4 23 L9.2 18.2 L12.8 26.2 L16.6 24.6 L13.1 16.8 L20.4 16.8 Z%22 fill=%22%230369a1%22 stroke=%22%23ffffff%22 stroke-width=%221.6%22 stroke-linejoin=%22round%22/%3E%3Cpath d=%22M25 2 L26.6 6.4 L31 8 L26.6 9.6 L25 14 L23.4 9.6 L19 8 L23.4 6.4 Z%22 fill=%22%2338bdf8%22 stroke=%22%23ffffff%22 stroke-width=%221%22 stroke-linejoin=%22round%22/%3E%3C/svg%3E") 4 3, pointer;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+.dark {
+  --background: #0a0a0a;
+  --foreground: #ededed;
+  --focus: #38bdf8;
+  --hover-bg: #27272a;
+  --hover-card-bg: #18181b;
+  --hover-card-border: #71717a;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+/* 스크롤은 되지만 스크롤바는 보이지 않게 합니다. */
+@utility no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* 마우스 호버 효과. 호버가 있는 기기(마우스)에서만 적용하고, 누르는 순간의 눌림 효과는 터치에서도 보입니다. */
+
+/* 배경만 살짝 바뀌는 효과: 아이콘 버튼, 토글, 텍스트 버튼 */
+@utility hover-ghost {
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease,
+    transform 0.1s ease;
+  @media (hover: hover) {
+    &:hover {
+      background-color: var(--hover-bg);
+    }
+  }
+  &:active {
+    transform: scale(0.96);
+  }
+}
+
+/* 카드: 배경과 테두리가 바뀌고 살짝 떠오릅니다. */
+@utility hover-card {
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    box-shadow 0.15s ease,
+    transform 0.15s ease;
+  @media (hover: hover) {
+    &:hover {
+      background-color: var(--hover-card-bg);
+      border-color: var(--hover-card-border);
+      box-shadow: 0 2px 8px rgb(0 0 0 / 0.08);
+      transform: translateY(-1px);
+    }
+  }
+  &:active {
+    transform: translateY(0) scale(0.99);
+  }
+}
+
+/* 강조 버튼(보내기, 중단): 살짝 밝아집니다. */
+@utility hover-primary {
+  transition:
+    filter 0.15s ease,
+    transform 0.1s ease;
+  @media (hover: hover) {
+    &:hover:not(:disabled) {
+      filter: brightness(1.15);
+    }
+  }
+  &:active:not(:disabled) {
+    transform: scale(0.97);
+  }
+}
+
+@layer base {
+  /* 누를 수 있는 요소는 포인터 커서를 쓰고, 비활성 버튼은 금지 커서를 씁니다. */
+  button:not(:disabled),
+  a[href],
+  [role="button"]:not([aria-disabled="true"]),
+  label:has(input[type="radio"]),
+  summary {
+    cursor: pointer;
+  }
+  button:disabled {
+    cursor: not-allowed;
+  }
+
+  /* 마우스가 있는 기기에서만 전용 커서를 씁니다. 입력창과 본문 글자는 I-beam을 유지합니다. */
+  @media (pointer: fine) {
+    body {
+      cursor: var(--cursor-default);
+    }
+    button:not(:disabled),
+    a[href],
+    [role="button"]:not([aria-disabled="true"]),
+    label:has(input[type="radio"]),
+    summary {
+      cursor: var(--cursor-pointer);
+    }
+    textarea,
+    input:not([type="radio"]):not([type="checkbox"]),
+    p,
+    li,
+    td,
+    th,
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    blockquote,
+    code {
+      cursor: text;
+    }
+    /* 커서가 안 보이는 글자 위 링크·버튼 안의 글자는 위 규칙에 덮이지 않게 합니다. */
+    button *,
+    a[href] *,
+    summary * {
+      cursor: inherit;
+    }
+  }
+
+  /* 모든 포커스 가능한 요소에 같은 포커스 링을 씁니다. */
+  :where(a, button, summary, [tabindex]):focus-visible {
+    outline: 2px solid var(--focus);
+    outline-offset: 2px;
+  }
+
+  /* 움직임 줄이기 설정을 존중합니다. */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    ::before,
+    ::after {
+      transition-duration: 0.01ms !important;
+      animation-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
