@@ -55,17 +55,29 @@ Preview 배포는 사용하지 않습니다(담당자 결정). PR에서는 배�
 
 ## 해야 할 설정 (담당자)
 
-1. **공유 요청 제한 저장소 (production 공개 전에 권장)**: Vercel Marketplace의 Upstash Redis를 `portfolio-chat` 프로젝트에 연결하거나 Upstash에서 직접 만듭니다. 서버에는 아래 두 환경변수가 Production에 있어야 합니다(Preview 배포를 하지 않으므로 Preview는 필요 없습니다). 연동이 다른 이름(예: `KV_REST_API_URL`, `KV_REST_API_TOKEN`)으로 넣는다면 이 두 이름으로 맞춰 추가합니다. 둘 다 없으면 메모리 제한기로 동작하고, 저장소가 실패해도 메모리 제한기로 넘어갑니다. 연동이 넣는 변수 이름은 확인하지 않았습니다.
+1. **공유 요청 제한 저장소 (이미 공개 상태라 우선 권장)**: Vercel Marketplace의 Upstash Redis를 `portfolio-chat` 프로젝트에 연결하거나 Upstash에서 직접 만듭니다. 서버에는 아래 두 환경변수가 Production에 있어야 합니다(Preview 배포를 하지 않으므로 Preview는 필요 없습니다). 연동이 다른 이름(예: `KV_REST_API_URL`, `KV_REST_API_TOKEN`)으로 넣는다면 이 두 이름으로 맞춰 추가합니다. 둘 다 없으면 메모리 제한기로 동작하고, 저장소가 실패해도 메모리 제한기로 넘어갑니다. 연동이 넣는 변수 이름은 확인하지 않았습니다.
 
    | 이름 | 값 |
    | --- | --- |
    | `UPSTASH_REDIS_REST_URL` | Upstash Redis REST URL |
    | `UPSTASH_REDIS_REST_TOKEN` | Upstash Redis REST 토큰(민감 변수로 등록) |
 
-2. **smoke test용 보호 우회 시크릿 (선택)**: Vercel 인증이 켜져 있으면 `*.vercel.app` 배포 URL이 보호되어 smoke test가 401/302를 받습니다(이전 Preview 실행에서 302를 받음). production 배포 URL의 보호 여부는 확인하지 못했습니다. 우회 시크릿이 없으면 이 단계는 실패가 아니라 알림과 함께 건너뜁니다. Vercel 프로젝트 Settings → Deployment Protection의 "Protection Bypass for Automation"에서 시크릿을 만들고, GitHub 시크릿 `VERCEL_AUTOMATION_BYPASS_SECRET`으로 등록합니다(`gh secret set VERCEL_AUTOMATION_BYPASS_SECRET --repo side-projects-labs/portfolio-chat`).
+2. **smoke test용 보호 우회 시크릿 (선택)**: smoke test는 `vercel deploy`가 출력하는 배포 고유 URL을 요청하는데, 이 주소는 Vercel 인증으로 보호되어 401/302를 받습니다. production 도메인(`portfolio-chat-pi.vercel.app`)은 공개라 보호되지 않지만 smoke test는 그 주소를 쓰지 않습니다. 우회 시크릿이 없으면 이 단계는 실패가 아니라 알림과 함께 건너뜁니다. Vercel 프로젝트 Settings → Deployment Protection의 "Protection Bypass for Automation"에서 시크릿을 만들고, GitHub 시크릿 `VERCEL_AUTOMATION_BYPASS_SECRET`으로 등록합니다(`gh secret set VERCEL_AUTOMATION_BYPASS_SECRET --repo side-projects-labs/portfolio-chat`).
 3. **채팅 전용 Groq 키 (권장)**: 지금은 `dreamweaver-ai`와 같은 키입니다. Groq 콘솔에서 새 키를 발급해 Vercel의 `GROQ_API_KEY`를 교체하면 비용 한도와 교체가 분리됩니다. 코드로는 할 수 없습니다.
 4. **비용 상한과 경보**: 코드가 아니라 모델 공급자 콘솔과 Vercel에서 설정합니다. 코드는 제한에 걸릴 때 서버 로그에 `rate_limited`만 남깁니다.
 5. 운영용 프롬프트를 쓰면 `CHAT_SYSTEM_PROMPT`를 Production에 추가합니다. 값은 저장소에 적지 않습니다.
+
+## 공개 상태 (2026-11-24 직접 확인)
+
+| 주소 | 인증 | 확인한 응답 |
+| --- | --- | --- |
+| `https://portfolio-chat-pi.vercel.app/` (production 도메인, 저장소 `homepage`) | 없음(공개) | 첫 화면 200, `POST /api/chat` 빈 입력에 400 |
+| `https://portfolio-chat-yeon-cheols-projects.vercel.app/` (팀 범위 별칭) | Vercel 인증 | 302(Vercel 로그인으로 이동) |
+| `https://portfolio-chat-<해시>-yeon-cheols-projects.vercel.app` (배포마다 생기는 고유 주소) | Vercel 인증 | 302(첫 화면), 401(API) |
+
+- 이 문서의 이전 판본과 README는 "production 도메인도 인증으로 보호된다"고 적었는데, `portfolio-chat-pi.vercel.app`을 직접 확인하지 않은 추정이었고 틀렸습니다. 위 표가 직접 확인한 값입니다.
+- 따라서 채팅은 누구나 호출할 수 있고, 모델 호출 비용은 이 서비스의 Groq 키(다른 프로젝트와 공유)로 나갑니다. 현재 요청 제한은 인스턴스별 메모리 방식이라 서버리스에서는 약합니다. 위 "해야 할 설정"의 1·3·4번(공유 제한 저장소, 채팅 전용 키, 비용 상한과 경보)이 우선입니다.
+- Vercel의 인증 설정이 어느 주소를 보호하는지는 Vercel 설정에 따라 달라지므로, 이 표는 설정을 바꾸면 다시 확인해야 합니다.
 
 ## 클라이언트 식별 (`x-forwarded-for`)
 
