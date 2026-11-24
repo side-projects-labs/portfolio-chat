@@ -26,6 +26,8 @@
 | Vercel 프로젝트 `portfolio-chat` 생성·로컬 연동 (`yeon-cheols-projects`, Git 미연결) | 완료 |
 | Node 버전 | `package.json`의 `engines`로 22.x 고정 (새 프로젝트 기본값은 26.x였음). `vercel build`에서 함수 런타임 `nodejs22.x` 확인 |
 | 워크플로 문법 | `actionlint` 통과 |
+| GitHub 변수 `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID`와 시크릿 `VERCEL_TOKEN` | 등록됨 (토큰 값의 유효성은 첫 배포에서 확인) |
+| Vercel 환경변수 `GROQ_API_KEY`(민감 변수), `GROQ_MODEL` | Production·Preview에 등록됨. 값은 로컬 `.env.local`에서 그대로 복사했고 확인하지 않음. `dreamweaver-ai`와 같은 키라 한쪽의 비용·교체가 다른 쪽에 영향을 줌 |
 | `vercel pull`, `vercel build` | 로컬에서 실행해 성공 확인 |
 | `vercel deploy`와 GitHub Actions의 실제 실행 | **실행하지 않음 (미검증)** |
 
@@ -43,7 +45,7 @@
    토큰은 직접 등록합니다. 터미널에서 `gh secret set VERCEL_TOKEN --repo side-projects-labs/portfolio-chat`을 실행하면 값을 붙여 넣으라고 묻습니다. 기존 토큰을 재사용하면 한 저장소의 유출이 다른 프로젝트 배포에도 영향을 주므로, 가능하면 이 저장소 전용 토큰(만료일 설정)을 권장합니다.
 
 3. **GitHub Environments**: `preview`, `production`을 만들고 `production`에는 Required reviewers를 걸어 master 병합 후 사람이 승인해야 배포되게 하는 것을 권장합니다.
-4. **Vercel 프로젝트 환경변수**: Production과 Preview에 각각 `GROQ_API_KEY`, `GROQ_MODEL`을 넣고, 운영용 프롬프트를 쓰면 `CHAT_SYSTEM_PROMPT`도 넣습니다. 값은 저장소에 적지 않습니다.
+4. **Vercel 프로젝트 환경변수**: `GROQ_API_KEY`, `GROQ_MODEL`은 등록했습니다. 운영용 프롬프트를 쓰면 `CHAT_SYSTEM_PROMPT`를 Production과 Preview에 추가합니다. 값은 저장소에 적지 않습니다. 비용 한도와 교체를 분리하려면 채팅 전용 키로 바꾸는 것을 권장합니다.
 5. **Preview 보호**: Vercel의 Deployment Protection에서 Preview에 인증을 켜는 것을 권장합니다. 공개 Preview URL에서도 AI 키가 쓰이므로 누구나 호출해 비용이 날 수 있습니다.
 
 ## production 배포 전에 해결해야 할 것
