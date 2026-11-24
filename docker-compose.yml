@@ -1,0 +1,24 @@
+# 개발 서버용 compose입니다. 사용법: docker compose up -d --build
+services:
+  web:
+    build: .
+    container_name: portfolio-chat-dev
+    ports:
+      - "3000:3000"
+    # .env.local은 커밋하지 않는 파일입니다. 없으면 키 없이 뜹니다(채팅 호출은 설정 오류로 실패).
+    env_file:
+      - path: .env.local
+        required: false
+    environment:
+      # bind mount에서 파일 변경 감지가 안 되는 환경(macOS 등)을 위한 설정입니다.
+      WATCHPACK_POLLING: "true"
+      NEXT_TELEMETRY_DISABLED: "1"
+    volumes:
+      - .:/app
+      # 호스트의 node_modules와 .next가 컨테이너 것을 덮지 않게 분리합니다.
+      - node_modules:/app/node_modules
+      - next_cache:/app/.next
+
+volumes:
+  node_modules:
+  next_cache:
