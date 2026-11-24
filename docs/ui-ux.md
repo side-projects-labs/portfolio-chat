@@ -24,8 +24,9 @@
 | 답변에 쓴 출처를 답변 본문보다 먼저 또는 바로 옆에서 보이게 한다 | Stack Overflow AI Assist는 출처를 답변 위에 펼치고 인용문을 붙입니다 `[벤더]` [출처](https://stackoverflow.blog/2025/12/02/introducing-stack-overflow-ai-assist-a-tool-for-the-modern-developer/) |
 | 출처는 문장 옆 인라인 칩, 답변 요약 줄, 상단 패널 중 둘 이상으로 접근 가능하게 한다 | Perplexity가 세 방식을 함께 씁니다 `[제3자]` [출처 1](https://aiuxplayground.com/teardowns/perplexity/citations), [출처 2](https://ai-design-patterns.pages.dev/teardowns/perplexity/citations) |
 | 출처 표기가 개발자 신뢰의 기반이라는 벤더의 주장을 받아들여, 출처가 없는 주장은 출처 없음으로 보이게 한다 (본문 미대조) | Stack Overflow 블로그 `[벤더]` [출처](https://stackoverflow.blog/2024/09/30/attribution-as-the-foundation-of-developer-trust/) |
-| 근거 문서가 없으면 모른다고 답하는 상태를 별도 화면 상태로 둔다 | kapa.ai 문서 Q&A 구조 `[벤더]` [출처](https://docs.kapa.ai/use-cases/documentation-assistant) |
+| 근거 문서가 없으면 모른다고 답하는 상태를 별도 화면 상태로 둔다. 단, 검색 단계가 있어 "찾았는데 없었다"는 신호가 있을 때만 표시하고, 검색을 하지 않는 응답에는 표시하지 않는다(이슈 #6 시점에는 검색 단계가 없어 화면에 나타나지 않는다) | kapa.ai 문서 Q&A 구조 `[벤더]` [출처](https://docs.kapa.ai/use-cases/documentation-assistant) |
 | 출처 링크가 실제로 열리는지는 화면이 아니라 평가 질문 세트에서 확인한다 | `[가정]` |
+| 근거에 따라 화면 상태를 셋으로 나눈다: 출처 있음 / "출처 없이 생성된 답변입니다"(일반 지식형) / "근거를 찾지 못했습니다"(사실·최신형). 정책은 [ADR 0002](adr/0002-grounding-policy.md) | `[가정]` |
 
 ## 2. 스트리밍과 중단
 
