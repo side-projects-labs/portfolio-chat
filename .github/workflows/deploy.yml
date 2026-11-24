@@ -1,0 +1,70 @@
+# 배포: master에 push될 때만 실행합니다. PR에서는 배포하지 않습니다.
+# 먼저 ci.yml(검증)을 호출하고, 통과해야 Vercel production에 배포한 뒤 smoke test를 합니다.
+# production Environment(승인 게이트)는 쓰지 않습니다: 병합 권한이 담당자에게만 있다는 담당자 결정입니다.
+# 액션은 커밋 SHA로 고정합니다(주석은 해당 태그). Vercel 토큰은 필요한 단계(pull, deploy)에만 줍니다.
+name: Deploy
+
+on:
+  push:
+    branches: [master]
+
+permissions:
+  contents: read
+
+# 배포가 겹치지 않게 하고, 진행 중인 배포는 취소하지 않습니다.
+# (대기 중인 실행이 여럿이면 GitHub가 가장 최근 것만 남깁니다.)
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+env:
+  # Vercel CLI 버전은 고정합니다. 올릴 때는 pull·build·deploy 명령이 같은지 확인합니다.
+  VERCEL_CLI: vercel@66.6.0
+
+jobs:
+  verify:
+    uses: ./.github/workflows/ci.yml
+
+  production:
+    needs: verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      VERCEL_ORG_ID: ${{ vars.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ vars.VERCEL_PROJECT_ID }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115 # v6.1.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Vercel 환경 정보 가져오기
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: pnpm dlx "$VERCEL_CLI" pull --yes --environment=production
+      - name: 빌드
+        run: pnpm dlx "$VERCEL_CLI" build --prod
+      - name: 배포
+        id: deploy
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: |
+          url=$(pnpm dlx "$VERCEL_CLI" deploy --prebuilt --prod)
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+          echo "Production: $url" >> "$GITHUB_STEP_SUMMARY"
+      - name: 배포 확인(smoke test)
+        env:
+          DEPLOY_URL: ${{ steps.deploy.outputs.url }}
+          VERCEL_AUTOMATION_BYPASS_SECRET: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
+        run: |
+          code=0
+          bash scripts/smoke.sh "$DEPLOY_URL" || code=$?
+          if [ "$code" -eq 3 ]; then
+            echo "::notice::배포 보호 때문에 smoke test를 확인하지 못했습니다. VERCEL_AUTOMATION_BYPASS_SECRET 시크릿을 등록하면 확인합니다."
+            exit 0
+          fi
+          exit "$code"
