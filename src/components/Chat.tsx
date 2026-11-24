@@ -85,7 +85,17 @@ export function Chat({ transport = defaultTransport }: { transport?: ChatTranspo
   return (
     <main className="mx-auto flex h-dvh w-full max-w-3xl flex-col pl-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))]">
       <header className="flex items-center justify-between pb-3 pt-[max(1rem,env(safe-area-inset-top))] text-sm text-zinc-600 dark:text-zinc-400">
-        <h1>기술 멘토 채팅</h1>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            aria-label="뒤로"
+            onClick={() => window.history.back()}
+            className="hover-ghost rounded-lg px-2.5 py-1 pointer-coarse:px-3 pointer-coarse:py-3"
+          >
+            <span aria-hidden="true">←</span>
+          </button>
+          <h1>기술 멘토 채팅</h1>
+        </div>
         <div className="flex items-center gap-2">
           {messages.length > 0 && (
             <button

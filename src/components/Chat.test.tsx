@@ -26,6 +26,14 @@ describe("Chat", () => {
     expect(screen.getAllByRole("button", { name: /^예시:/ }).length).toBeGreaterThanOrEqual(3);
   });
 
+  it("헤더의 뒤로 버튼을 누르면 브라우저 이전 페이지로 돌아간다", async () => {
+    const back = vi.spyOn(window.history, "back").mockImplementation(() => {});
+    const user = setup({ streamText: () => say() });
+    await user.click(screen.getByRole("button", { name: "뒤로" }));
+    expect(back).toHaveBeenCalledTimes(1);
+    back.mockRestore();
+  });
+
   it("질문을 보내면 내 메시지와 스트리밍된 답변을 보여 준다", async () => {
     const user = setup({ streamText: () => say("안녕", "하세요") });
     await user.type(screen.getByRole("textbox", { name: "메시지" }), "인사해 줘");
