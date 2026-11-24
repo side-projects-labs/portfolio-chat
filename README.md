@@ -5,8 +5,8 @@
 ## 현재 상태
 
 - **구현**: 스트리밍 채팅 화면과 서버 API를 만들었습니다(이슈 #6). portfolio2에서 옮겨 온 코드는 없습니다.
-- **배포**: master에 병합되면 GitHub Actions가 Vercel production에 배포합니다(PR에서는 배포하지 않고 Preview는 쓰지 않습니다). 현재 배포는 **Vercel 인증으로 보호되어 있어 로그인한 계정만 접속할 수 있습니다.**
-- **공개 전에 필요한 것**: 공유 요청 제한 저장소(Upstash), 채팅 전용 Groq 키, 비용 상한과 경보. 자세한 내용은 [docs/deploy.md](docs/deploy.md)를 봅니다.
+- **배포**: master에 병합되면 GitHub Actions가 Vercel production에 배포합니다(PR에서는 배포하지 않고 Preview는 쓰지 않습니다). production 도메인 `https://portfolio-chat-pi.vercel.app`은 **인증 없이 공개되어 있고** `/api/chat`도 인증 없이 응답합니다(2026-11-24 직접 확인). 같은 서비스의 팀 범위 주소(`portfolio-chat-yeon-cheols-projects.vercel.app`)와 배포마다 생기는 고유 주소만 Vercel 인증으로 보호됩니다.
+- **공개 상태에서 우선 필요한 것**: 공유 요청 제한 저장소(Upstash), 채팅 전용 Groq 키, 비용 상한과 경보. 이미 누구나 호출할 수 있는 상태인데 요청 제한은 인스턴스별 메모리 방식이고 Groq 키는 다른 프로젝트와 공유합니다. 자세한 내용은 [docs/deploy.md](docs/deploy.md)를 봅니다.
 - **스택**: Next.js, TypeScript, Tailwind, Vercel AI SDK, 모델 공급자 Groq. 모두 담당자의 선택이며 다른 후보와 비교 평가한 결과가 아닙니다.
 - **확인하지 못한 것**: 실기기 모바일(iOS 키보드 포함), 스크린 리더(VoiceOver, TalkBack), 배포된 앱의 실제 채팅 응답, 실제 Upstash 연결.
 
