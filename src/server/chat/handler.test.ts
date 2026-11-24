@@ -148,5 +148,24 @@ describe("handleChat", () => {
     expect(res.status).toBe(413);
     expect(streamText).not.toHaveBeenCalled();
   });
+
+  it("비동기 제한기가 허용하면 모델을 호출하고 스트리밍한다", async () => {
+    const streamText = vi.fn(() => chunks("ok"));
+    const res = await handleChat(post(userBody()), { streamText, rateLimit: async () => ({ ok: true as const }) });
+    expect(res.status).toBe(200);
+    await res.text();
+    expect(streamText).toHaveBeenCalledTimes(1);
+  });
+
+  it("비동기 제한기가 거부하면 429와 Retry-After를 주고 모델을 호출하지 않는다", async () => {
+    const streamText = vi.fn(() => chunks("x"));
+    const res = await handleChat(post(userBody()), {
+      streamText,
+      rateLimit: async () => ({ ok: false as const, retryAfterSec: 42 }),
+    });
+    expect(res.status).toBe(429);
+    expect(res.headers.get("retry-after")).toBe("42");
+    expect(streamText).not.toHaveBeenCalled();
+  });
 });
 

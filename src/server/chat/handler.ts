@@ -3,10 +3,12 @@ import { sanitizeMessages, validateChatInput } from "./validate";
 
 export type ChatMetrics = { firstTokenMs: number | null; totalMs: number };
 
+type RateLimitDecision = { ok: true } | { ok: false; retryAfterSec: number };
+
 export type ChatDeps = {
   streamText: (input: { messages: unknown[]; signal: AbortSignal }) => AsyncIterable<string>;
   onMetrics?: (metrics: ChatMetrics) => void;
-  rateLimit?: (input: { request: Request; chars: number }) => { ok: true } | { ok: false; retryAfterSec: number };
+  rateLimit?: (input: { request: Request; chars: number }) => RateLimitDecision | Promise<RateLimitDecision>;
   now?: () => number;
 };
 
@@ -47,7 +49,7 @@ export async function handleChat(request: Request, deps: ChatDeps): Promise<Resp
 
   if (deps.rateLimit) {
     const chars = messages.reduce((n, m) => n + m.parts.reduce((k, p) => k + p.text.length, 0), 0);
-    const limited = deps.rateLimit({ request, chars });
+    const limited = await deps.rateLimit({ request, chars });
     if (!limited.ok) return json(429, "rate_limited", { "Retry-After": String(limited.retryAfterSec) });
   }
   const startedAt = now();
