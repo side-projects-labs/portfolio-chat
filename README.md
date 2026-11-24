@@ -29,6 +29,8 @@
 | `docker compose logs -f web` | 로그 확인 |
 | `docker compose down` | 컨테이너 중지·삭제 (볼륨 포함은 `-v`) |
 
+배포는 GitHub Actions와 Vercel로 합니다. 설정과 주의점은 [docs/deploy.md](docs/deploy.md)를 봅니다.
+
 환경변수는 서버에서만 읽습니다. `.env.example`을 참고해 `.env.local`을 만들고 커밋하지 않습니다.
 
 ## 분리 대상 (portfolio2 기준, 확인한 경로)
