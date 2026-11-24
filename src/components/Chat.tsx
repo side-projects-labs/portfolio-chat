@@ -15,6 +15,12 @@ const EXAMPLES = [
 ];
 
 const SAFE_ERROR = "응답을 만들지 못했습니다. 잠시 후 다시 시도해 주세요.";
+const RATE_LIMITED_ERROR = "요청이 너무 많습니다. 잠시 후 다시 시도해 주세요.";
+
+// 서버 응답 원문은 화면에 보여 주지 않고, 알려진 코드만 고정된 문구로 바꿉니다.
+function errorText(error: Error | undefined): string {
+  return error?.message.includes("rate_limited") ? RATE_LIMITED_ERROR : SAFE_ERROR;
+}
 
 const NEAR_BOTTOM_PX = 80;
 const MAX_INPUT_HEIGHT_PX = 160;
@@ -30,7 +36,7 @@ function sourcesOf(message: UIMessage): Source[] {
 }
 
 export function Chat({ transport = defaultTransport }: { transport?: ChatTransport<UIMessage> }) {
-  const { messages, setMessages, sendMessage, status, stop, regenerate, clearError } = useChat({ transport });
+  const { messages, setMessages, sendMessage, status, stop, regenerate, clearError, error } = useChat({ transport });
   const [input, setInput] = useState("");
   const [stopped, setStopped] = useState(false);
   const [atBottom, setAtBottom] = useState(true);
@@ -150,7 +156,7 @@ export function Chat({ transport = defaultTransport }: { transport?: ChatTranspo
 
         {status === "error" && (
           <div role="alert" className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-800 dark:border-red-900 dark:bg-red-950 dark:text-red-200">
-            <p>{SAFE_ERROR}</p>
+            <p>{errorText(error)}</p>
             <button type="button" onClick={() => void regenerate()} className="hover-ghost mt-2 rounded-lg border border-red-300 px-3 py-1 [--hover-bg:#fee2e2] pointer-coarse:py-3 dark:border-red-800 dark:[--hover-bg:#7f1d1d]">
               다시 시도
             </button>

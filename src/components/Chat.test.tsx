@@ -34,6 +34,15 @@ describe("Chat", () => {
     expect(await screen.findByText("안녕하세요")).toBeInTheDocument();
   });
 
+  it("검색 단계가 없는 지금은 답변에 근거 없음 문구를 붙이지 않는다", async () => {
+    const user = setup({ streamText: () => say("그냥 답변") });
+    await user.type(screen.getByRole("textbox", { name: "메시지" }), "질문");
+    await user.click(screen.getByRole("button", { name: "보내기" }));
+    await screen.findByText("그냥 답변");
+    expect(screen.queryByText("근거를 찾지 못했습니다")).not.toBeInTheDocument();
+    expect(screen.queryByText(/출처 \d+개/)).not.toBeInTheDocument();
+  });
+
   it("답변의 코드 블록을 복사 버튼이 있는 코드 블록으로 보여 준다", async () => {
     const user = setup({ streamText: () => say("예:\n```ts\nconst a = 1;\n```") });
     await user.type(screen.getByRole("textbox", { name: "메시지" }), "코드");
@@ -87,6 +96,19 @@ describe("Chat", () => {
     expect(await screen.findByRole("alert")).toHaveTextContent("응답을 만들지 못했습니다");
     expect(document.body).not.toHaveTextContent("gsk_fake_key_123");
     expect(document.body).not.toHaveTextContent("internal.example");
+  });
+
+  it("요청 제한에 걸리면 일반 오류 대신 잠시 후 다시 시도하라는 안내만 보여 준다", async () => {
+    const user = setup({
+      streamText: () => say("x"),
+      rateLimit: () => ({ ok: false, retryAfterSec: 30 }),
+    });
+    await user.type(screen.getByRole("textbox", { name: "메시지" }), "질문");
+    await user.click(screen.getByRole("button", { name: "보내기" }));
+    const alert = await screen.findByRole("alert");
+    expect(alert).toHaveTextContent("요청이 너무 많습니다");
+    expect(alert).not.toHaveTextContent("rate_limited");
+    expect(alert).not.toHaveTextContent("{");
   });
 
   it("빈 입력과 상한을 넘은 입력은 보낼 수 없다", () => {

@@ -100,5 +100,53 @@ describe("handleChat", () => {
       { id: "u2", role: "user", parts: [{ type: "text", text: "다음" }] },
     ]);
   });
+
+  it("제한을 넘으면 429와 Retry-After를 주고 모델을 호출하지 않는다", async () => {
+    const streamText = vi.fn(() => chunks("x"));
+    const rateLimit = vi.fn(() => ({ ok: false as const, retryAfterSec: 42 }));
+    const res = await handleChat(post(userBody()), { streamText, rateLimit });
+    expect(res.status).toBe(429);
+    expect(res.headers.get("retry-after")).toBe("42");
+    expect(await res.json()).toEqual({ error: "rate_limited" });
+    expect(streamText).not.toHaveBeenCalled();
+  });
+
+  it("제한 확인에 요청과 모델로 보낼 글자 수를 넘긴다", async () => {
+    const rateLimit = vi.fn(() => ({ ok: true as const }));
+    const res = await handleChat(post(userBody("안녕하세요")), { streamText: () => chunks("x"), rateLimit });
+    await res.text();
+    expect(rateLimit).toHaveBeenCalledTimes(1);
+    const arg = (rateLimit.mock.calls[0] as unknown as [{ request: Request; chars: number }])[0];
+    expect(arg.chars).toBe(5);
+    expect(arg.request).toBeInstanceOf(Request);
+  });
+
+  it("잘못된 입력은 제한 확인을 하기 전에 거부한다", async () => {
+    const rateLimit = vi.fn(() => ({ ok: true as const }));
+    const res = await handleChat(post({ messages: [] }), { streamText: () => chunks("x"), rateLimit });
+    expect(res.status).toBe(400);
+    expect(rateLimit).not.toHaveBeenCalled();
+  });
+
+  it("본문이 상한보다 크면 읽기 전에 413으로 거부한다", async () => {
+    const streamText = vi.fn(() => chunks("x"));
+    const req = new Request("http://localhost/api/chat", {
+      method: "POST",
+      headers: { "content-type": "application/json", "content-length": String(10 * 1024 * 1024) },
+      body: JSON.stringify(userBody()),
+    });
+    const res = await handleChat(req, { streamText });
+    expect(res.status).toBe(413);
+    expect(await res.json()).toEqual({ error: "too_large" });
+    expect(streamText).not.toHaveBeenCalled();
+  });
+
+  it("Content-Length가 없어도 읽은 본문이 상한보다 크면 413으로 거부한다", async () => {
+    const streamText = vi.fn(() => chunks("x"));
+    const huge = JSON.stringify({ messages: [], pad: "가".repeat(300_000) });
+    const res = await handleChat(post(huge), { streamText });
+    expect(res.status).toBe(413);
+    expect(streamText).not.toHaveBeenCalled();
+  });
 });
 
