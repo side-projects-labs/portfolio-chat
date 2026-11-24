@@ -7,16 +7,25 @@
 | 이벤트 | 하는 일 |
 | --- | --- |
 | 모든 PR, master push | `verify`: `pnpm install --frozen-lockfile`, `lint`, `typecheck`, `test`, `build` (시크릿 없이 실행, 포크 PR 포함) |
-| 같은 저장소의 PR | `verify` 통과 후 `preview` 배포 (포크 PR은 시크릿이 없어 건너뜀) |
-| master push | `verify` 통과 후 `production` 배포 |
+| 같은 저장소의 PR | `verify` 통과 후 `preview` 배포와 smoke test (포크 PR은 시크릿이 없어 건너뜀) |
+| master push | `verify` 통과 후 `production` 배포와 smoke test |
 
-배포는 Vercel CLI(`vercel@66.6.0` 고정)의 `pull` → `build` → `deploy --prebuilt` 순서입니다. Vercel의 Git 연동은 쓰지 않으며(`vercel.json`의 `git.deploymentEnabled: false`) 배포는 이 워크플로만 합니다.
+배포는 Vercel CLI(`vercel@66.6.0` 고정)의 `pull` → `build` → `deploy --prebuilt` 순서이고, 이어서 [scripts/smoke.sh](../scripts/smoke.sh)가 첫 화면(200)과 `/api/chat`의 잘못된 입력(400 `empty`)을 확인합니다. 모델을 호출하지 않아 비용이 들지 않습니다. Vercel의 Git 연동은 쓰지 않으며(`vercel.json`의 `git.deploymentEnabled: false`) 배포는 이 워크플로만 합니다.
+
+## 승인 게이트를 쓰지 않는 결정
+
+`production` 배포에는 GitHub Environment(승인자 지정)를 쓰지 않습니다. master에 병합할 수 있는 사람이 담당자뿐이라 병합이 곧 승인이라는 담당자의 결정입니다. 이 결정의 영향은 다음과 같습니다.
+
+- master에 병합하면 `production` 배포가 곧바로 실행됩니다. 병합 전에 배포 결과를 되돌릴 확인 지점이 없습니다.
+- 병합 권한이 다른 사람에게 열리거나 브랜치 보호가 풀리면 이 전제가 깨집니다. 그때 `production` Environment와 Required reviewers를 다시 검토합니다.
+- `preview`는 같은 저장소의 PR에서 자동 배포되며 GitHub Environment `preview`로 기록됩니다.
 
 ## 보안 원칙 (공개 저장소)
 
 - `pull_request_target`을 쓰지 않고, 포크 PR에는 시크릿을 주지 않습니다.
 - 액션은 커밋 SHA로 고정했고 `persist-credentials: false`입니다. `run:`에는 PR 제목·브랜치명 같은 외부 입력을 넣지 않습니다.
 - Vercel 토큰은 환경변수(`VERCEL_TOKEN`)로만 전달해 명령줄 인자로 로그에 남지 않게 했고, 필요한 `pull`·`deploy` 단계에만 줍니다. 의존성 설치와 프로젝트 빌드(`next build`)에는 노출하지 않습니다.
+- smoke test의 보호 우회 시크릿은 명령줄 인자가 아니라 권한 600의 임시 파일로 넘기며 출력에 남기지 않습니다.
 - AI 키(`GROQ_API_KEY`)는 GitHub가 아니라 Vercel 프로젝트의 환경변수에만 둡니다. 빌드는 키가 필요 없습니다.
 
 ## 현재 상태
@@ -24,35 +33,34 @@
 | 항목 | 상태 |
 | --- | --- |
 | Vercel 프로젝트 `portfolio-chat` 생성·로컬 연동 (`yeon-cheols-projects`, Git 미연결) | 완료 |
-| Node 버전 | `package.json`의 `engines`로 22.x 고정 (새 프로젝트 기본값은 26.x였음). `vercel build`에서 함수 런타임 `nodejs22.x` 확인 |
-| 워크플로 문법 | `actionlint` 통과 |
-| GitHub 변수 `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID`와 시크릿 `VERCEL_TOKEN` | 등록됨 (토큰 값의 유효성은 첫 배포에서 확인) |
+| Node 버전 | `package.json`의 `engines`로 22.x 고정 (새 프로젝트 기본값은 26.x였음). 함수 런타임 `nodejs22.x` 확인 |
+| GitHub 변수 `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID`와 시크릿 `VERCEL_TOKEN` | 등록됨. PR #7의 첫 실행에서 `verify`와 `preview` 배포가 성공해 토큰이 유효함을 확인 |
 | Vercel 환경변수 `GROQ_API_KEY`(민감 변수), `GROQ_MODEL` | Production·Preview에 등록됨. 값은 로컬 `.env.local`에서 그대로 복사했고 확인하지 않음. `dreamweaver-ai`와 같은 키라 한쪽의 비용·교체가 다른 쪽에 영향을 줌 |
-| `vercel pull`, `vercel build` | 로컬에서 실행해 성공 확인 |
-| `vercel deploy`와 GitHub Actions의 실제 실행 | **실행하지 않음 (미검증)** |
+| 요청 제한 | 공유 저장소(Upstash Redis REST) 지원을 코드에 추가함. **저장소를 만들고 환경변수를 넣기 전에는 인스턴스별 메모리 제한기로 동작** |
+| 배포 후 smoke test | 스크립트와 단계 추가, 개발 컨테이너로 실행 확인. 보호된 배포에는 우회 시크릿이 필요하며 없으면 건너뜀(알림) |
+| `production` job과 `vercel deploy --prod` | **한 번도 실행하지 않음 (미검증)** |
 
 ## 해야 할 설정 (담당자)
 
-1. **Vercel 토큰 준비**: 새로 발급하거나(권장) 기존 토큰을 씁니다. Vercel 계정 설정의 Tokens에서 만료일을 두고 발급합니다.
-2. **GitHub 시크릿과 변수**: `portfolio-admin`과 같은 방식입니다. 토큰만 시크릿이고, 팀·프로젝트 ID는 비밀이 아니라 변수입니다.
+1. **공유 요청 제한 저장소 (production 공개 전에 권장)**: Vercel Marketplace의 Upstash Redis를 `portfolio-chat` 프로젝트에 연결하거나 Upstash에서 직접 만듭니다. 서버에는 아래 두 환경변수가 Production과 Preview에 있어야 합니다. 연동이 다른 이름(예: `KV_REST_API_URL`, `KV_REST_API_TOKEN`)으로 넣는다면 이 두 이름으로 맞춰 추가합니다. 둘 다 없으면 메모리 제한기로 동작하고, 저장소가 실패해도 메모리 제한기로 넘어갑니다. 연동이 넣는 변수 이름은 확인하지 않았습니다.
 
-   | 종류 | 이름 | 값 | 상태 |
-   | --- | --- | --- | --- |
-   | 변수 | `VERCEL_ORG_ID` | 팀 ID. `portfolio-admin`과 같은 팀이라 같은 값 | 등록함 |
-   | 변수 | `VERCEL_PROJECT_ID` | `portfolio-chat` 프로젝트의 ID(`.vercel/project.json`의 `projectId`). **`portfolio-admin`의 값을 쓰면 안 됨** | 등록함 |
-   | 시크릿 | `VERCEL_TOKEN` | Vercel 토큰 | **등록 필요** (GitHub 시크릿은 값을 읽을 수 없어 `portfolio-admin`의 것을 복사할 수 없음) |
+   | 이름 | 값 |
+   | --- | --- |
+   | `UPSTASH_REDIS_REST_URL` | Upstash Redis REST URL |
+   | `UPSTASH_REDIS_REST_TOKEN` | Upstash Redis REST 토큰(민감 변수로 등록) |
 
-   토큰은 직접 등록합니다. 터미널에서 `gh secret set VERCEL_TOKEN --repo side-projects-labs/portfolio-chat`을 실행하면 값을 붙여 넣으라고 묻습니다. 기존 토큰을 재사용하면 한 저장소의 유출이 다른 프로젝트 배포에도 영향을 주므로, 가능하면 이 저장소 전용 토큰(만료일 설정)을 권장합니다.
+2. **smoke test용 보호 우회 시크릿 (선택)**: Preview(와 `*.vercel.app` 배포 URL)는 Vercel 인증으로 보호되어 smoke test가 401/302를 받습니다. 우회 시크릿이 없으면 이 단계는 실패가 아니라 알림과 함께 건너뜁니다. Vercel 프로젝트 Settings → Deployment Protection의 "Protection Bypass for Automation"에서 시크릿을 만들고, GitHub 시크릿 `VERCEL_AUTOMATION_BYPASS_SECRET`으로 등록합니다(`gh secret set VERCEL_AUTOMATION_BYPASS_SECRET --repo side-projects-labs/portfolio-chat`).
+3. **채팅 전용 Groq 키 (권장)**: 지금은 `dreamweaver-ai`와 같은 키입니다. Groq 콘솔에서 새 키를 발급해 Vercel의 `GROQ_API_KEY`를 교체하면 비용 한도와 교체가 분리됩니다. 코드로는 할 수 없습니다.
+4. **비용 상한과 경보**: 코드가 아니라 모델 공급자 콘솔과 Vercel에서 설정합니다. 코드는 제한에 걸릴 때 서버 로그에 `rate_limited`만 남깁니다.
+5. 운영용 프롬프트를 쓰면 `CHAT_SYSTEM_PROMPT`를 Production과 Preview에 추가합니다. 값은 저장소에 적지 않습니다.
 
-3. **GitHub Environments**: `preview`, `production`을 만들고 `production`에는 Required reviewers를 걸어 master 병합 후 사람이 승인해야 배포되게 하는 것을 권장합니다.
-4. **Vercel 프로젝트 환경변수**: `GROQ_API_KEY`, `GROQ_MODEL`은 등록했습니다. 운영용 프롬프트를 쓰면 `CHAT_SYSTEM_PROMPT`를 Production과 Preview에 추가합니다. 값은 저장소에 적지 않습니다. 비용 한도와 교체를 분리하려면 채팅 전용 키로 바꾸는 것을 권장합니다.
-5. **Preview 보호**: Vercel의 Deployment Protection에서 Preview에 인증을 켜는 것을 권장합니다. 공개 Preview URL에서도 AI 키가 쓰이므로 누구나 호출해 비용이 날 수 있습니다.
+## 클라이언트 식별 (`x-forwarded-for`)
 
-## production 배포 전에 해결해야 할 것
+요청 제한은 `x-forwarded-for`의 첫 주소로 클라이언트를 구분합니다. Vercel 문서에 따르면 Vercel은 이 헤더를 덮어써서 외부에서 보낸 값을 전달하지 않으며, 이는 IP 위조를 막기 위한 것입니다([Request headers](https://vercel.com/docs/headers/request-headers), [Reverse Proxy Servers and Vercel](https://vercel.com/docs/security/reverse-proxy)). 다만 다음 조건이 있습니다.
 
-- **요청 제한이 인스턴스마다 따로 셉니다.** 지금 제한기는 메모리 안에서만 동작합니다([ADR 0001](adr/0001-architecture.md)의 한계 1). Vercel은 요청마다 다른 인스턴스가 처리할 수 있어 제한이 약해집니다. 공유 저장소 기반으로 바꾸기 전에는 production을 공개하지 않는 것을 권장합니다.
-- **클라이언트 식별 헤더**: `x-forwarded-for`를 믿습니다. Vercel이 이 헤더를 어떻게 설정하는지는 아직 확인하지 않았습니다.
-- **비용 상한과 경보**는 코드가 아니라 모델 공급자 콘솔과 Vercel에서 설정해야 합니다.
+- **Vercel에 직접 연결할 때만** 신뢰할 수 있습니다. Vercel 앞에 다른 프록시나 CDN을 두면 이 헤더에는 그 프록시의 주소가 들어가고, 실제 사용자 주소를 정확히 알 수 없습니다. 이 경우 Vercel의 Verified Proxy 설정이 필요합니다.
+- `x-real-ip`가 같은 방식으로 덮어써지는지는 문서에 명시되어 있지 않아 확인하지 못했습니다. 코드는 `x-forwarded-for`가 없을 때만 `x-real-ip`를 씁니다.
+- 이 근거는 문서를 읽은 것이고, 실제 배포에서 위조 헤더를 보내 확인하지는 않았습니다.
 
 ## 롤백
 
