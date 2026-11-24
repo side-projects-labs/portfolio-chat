@@ -1,7 +1,7 @@
 # 검증(lint·타입·테스트·빌드) 후 Vercel에 배포합니다.
 #   - 모든 PR과 master push: verify (시크릿 없이 실행, 포크 PR도 실행)
 #   - 같은 저장소의 PR: verify 통과 후 preview 배포
-#   - master push: verify 통과 후 production 배포
+#   - master push: verify 통과 후 production 배포 (GitHub Environment 승인 게이트는 쓰지 않음: 병합 권한이 담당자에게만 있음)
 # 공개 저장소이므로 포크 PR에는 시크릿을 주지 않고, pull_request_target은 쓰지 않습니다.
 # Vercel 토큰은 필요한 단계(pull, deploy)에만 주고, 의존성 설치와 프로젝트 빌드에는 노출하지 않습니다.
 # 액션은 공급망 공격을 막기 위해 커밋 SHA로 고정합니다(주석은 해당 태그).
@@ -79,6 +79,18 @@ jobs:
           url=$(pnpm dlx "$VERCEL_CLI" deploy --prebuilt)
           echo "url=$url" >> "$GITHUB_OUTPUT"
           echo "Preview: $url" >> "$GITHUB_STEP_SUMMARY"
+      - name: 배포 확인(smoke test)
+        env:
+          DEPLOY_URL: ${{ steps.deploy.outputs.url }}
+          VERCEL_AUTOMATION_BYPASS_SECRET: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
+        run: |
+          code=0
+          bash scripts/smoke.sh "$DEPLOY_URL" || code=$?
+          if [ "$code" -eq 3 ]; then
+            echo "::notice::배포 보호 때문에 smoke test를 확인하지 못했습니다. VERCEL_AUTOMATION_BYPASS_SECRET 시크릿을 등록하면 확인합니다."
+            exit 0
+          fi
+          exit "$code"
 
   production:
     needs: verify
@@ -89,9 +101,6 @@ jobs:
     concurrency:
       group: deploy-production
       cancel-in-progress: false
-    environment:
-      name: production
-      url: ${{ steps.deploy.outputs.url }}
     env:
       VERCEL_ORG_ID: ${{ vars.VERCEL_ORG_ID }}
       VERCEL_PROJECT_ID: ${{ vars.VERCEL_PROJECT_ID }}
@@ -119,3 +128,15 @@ jobs:
           url=$(pnpm dlx "$VERCEL_CLI" deploy --prebuilt --prod)
           echo "url=$url" >> "$GITHUB_OUTPUT"
           echo "Production: $url" >> "$GITHUB_STEP_SUMMARY"
+      - name: 배포 확인(smoke test)
+        env:
+          DEPLOY_URL: ${{ steps.deploy.outputs.url }}
+          VERCEL_AUTOMATION_BYPASS_SECRET: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
+        run: |
+          code=0
+          bash scripts/smoke.sh "$DEPLOY_URL" || code=$?
+          if [ "$code" -eq 3 ]; then
+            echo "::notice::배포 보호 때문에 smoke test를 확인하지 못했습니다. VERCEL_AUTOMATION_BYPASS_SECRET 시크릿을 등록하면 확인합니다."
+            exit 0
+          fi
+          exit "$code"
