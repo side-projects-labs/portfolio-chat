@@ -48,14 +48,17 @@ Preview 배포는 사용하지 않습니다(담당자 결정). PR에서는 배�
 | Vercel 프로젝트 `portfolio-chat` 생성·로컬 연동 (`yeon-cheols-projects`, Git 미연결) | 완료 |
 | Node 버전 | `package.json`의 `engines`로 22.x 고정 (새 프로젝트 기본값은 26.x였음). 함수 런타임 `nodejs22.x` 확인 |
 | GitHub 변수 `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID`와 시크릿 `VERCEL_TOKEN` | 등록됨. 워크플로를 나누기 전 PR 실행(Preview 배포)에서 토큰이 유효함을 확인했고, 나눈 뒤의 `deploy.yml`은 아직 실행되지 않음 |
-| Vercel 환경변수 `GROQ_API_KEY`(민감 변수), `GROQ_MODEL` | Production에만 등록됨(Preview는 쓰지 않아 지움). 값은 로컬 `.env.local`에서 그대로 복사했고 확인하지 않음. `dreamweaver-ai`와 같은 키라 한쪽의 비용·교체가 다른 쪽에 영향을 줌 |
-| 요청 제한 | 공유 저장소(Upstash Redis REST) 지원을 코드에 추가함. **저장소를 만들고 환경변수를 넣기 전에는 인스턴스별 메모리 제한기로 동작** |
+| Vercel 환경변수 `GROQ_API_KEY`(민감 변수), `GROQ_MODEL` | Production에만 등록됨(Preview는 쓰지 않아 지움). 값은 로컬 `.env.local`에서 그대로 복사했고 확인하지 않음. `dreamweaver-ai`와 같은 키라 한쪽의 비용·교체가 다른 쪽에 영향을 줌. 키와 모델은 현재 것을 운영에도 그대로 쓰기로 한 담당자 결정이 있음(2026-11-25) |
+| 요청 제한 | 공유 저장소(Upstash Redis REST) 지원을 코드에 추가함. 환경변수가 없으면 인스턴스별 메모리 제한기로 동작. 저장소가 구성되어 있다는 담당자 확인이 있음(2026-11-25, 에이전트는 확인하지 못함) |
+| 비용 상한과 경보 | 모델 공급자 콘솔과 Vercel에서 설정하는 항목. 구성되어 있다는 담당자 확인이 있음(2026-11-25, 에이전트는 확인하지 못함). 임계값은 이 저장소에 적지 않음 |
 | 배포 후 smoke test | 스크립트와 단계 추가, 개발 컨테이너로 실행 확인. 보호된 배포 URL에는 우회 시크릿이 필요하며 없으면 건너뜀(알림). 이전 Preview 실행에서는 보호로 건너뛰었음 |
 | `deploy.yml`(`production` job, `vercel deploy --prod`) | **한 번도 실행하지 않음 (미검증).** 병합 후 첫 master push에서 처음 실행됨 |
 
-## 해야 할 설정 (담당자)
+## 설정 (담당자)
 
-1. **공유 요청 제한 저장소 (이미 공개 상태라 우선 권장)**: Vercel Marketplace의 Upstash Redis를 `portfolio-chat` 프로젝트에 연결하거나 Upstash에서 직접 만듭니다. 서버에는 아래 두 환경변수가 Production에 있어야 합니다(Preview 배포를 하지 않으므로 Preview는 필요 없습니다). 연동이 다른 이름(예: `KV_REST_API_URL`, `KV_REST_API_TOKEN`)으로 넣는다면 이 두 이름으로 맞춰 추가합니다. 둘 다 없으면 메모리 제한기로 동작하고, 저장소가 실패해도 메모리 제한기로 넘어갑니다. 연동이 넣는 변수 이름은 확인하지 않았습니다.
+1, 4번은 이미 구성되어 있다는 담당자 확인이 있습니다(2026-11-25). 아래는 구성할 때의 기준이며, 에이전트는 실제 설정을 확인하지 못했습니다. 3번은 하지 않기로 했습니다.
+
+1. **공유 요청 제한 저장소 (구성됨, 담당자 확인)**: Vercel Marketplace의 Upstash Redis를 `portfolio-chat` 프로젝트에 연결하거나 Upstash에서 직접 만듭니다. 서버에는 아래 두 환경변수가 Production에 있어야 합니다(Preview 배포를 하지 않으므로 Preview는 필요 없습니다). 연동이 다른 이름(예: `KV_REST_API_URL`, `KV_REST_API_TOKEN`)으로 넣는다면 이 두 이름으로 맞춰 추가합니다. 둘 다 없으면 메모리 제한기로 동작하고, 저장소가 실패해도 메모리 제한기로 넘어갑니다. 연동이 넣는 변수 이름은 확인하지 않았습니다.
 
    | 이름 | 값 |
    | --- | --- |
@@ -63,8 +66,8 @@ Preview 배포는 사용하지 않습니다(담당자 결정). PR에서는 배�
    | `UPSTASH_REDIS_REST_TOKEN` | Upstash Redis REST 토큰(민감 변수로 등록) |
 
 2. **smoke test용 보호 우회 시크릿 (선택)**: smoke test는 `vercel deploy`가 출력하는 배포 고유 URL을 요청하는데, 이 주소는 Vercel 인증으로 보호되어 401/302를 받습니다. production 도메인(`portfolio-chat-pi.vercel.app`)은 공개라 보호되지 않지만 smoke test는 그 주소를 쓰지 않습니다. 우회 시크릿이 없으면 이 단계는 실패가 아니라 알림과 함께 건너뜁니다. Vercel 프로젝트 Settings → Deployment Protection의 "Protection Bypass for Automation"에서 시크릿을 만들고, GitHub 시크릿 `VERCEL_AUTOMATION_BYPASS_SECRET`으로 등록합니다(`gh secret set VERCEL_AUTOMATION_BYPASS_SECRET --repo side-projects-labs/portfolio-chat`).
-3. **채팅 전용 Groq 키 (권장)**: 지금은 `dreamweaver-ai`와 같은 키입니다. Groq 콘솔에서 새 키를 발급해 Vercel의 `GROQ_API_KEY`를 교체하면 비용 한도와 교체가 분리됩니다. 코드로는 할 수 없습니다.
-4. **비용 상한과 경보**: 코드가 아니라 모델 공급자 콘솔과 Vercel에서 설정합니다. 코드는 제한에 걸릴 때 서버 로그에 `rate_limited`만 남깁니다.
+3. **채팅 전용 Groq 키 (하지 않기로 함, 담당자 결정)**: 현재 `dreamweaver-ai`와 같은 키와 모델을 운영에도 그대로 씁니다. 그래서 비용 한도와 키 교체가 두 프로젝트에 함께 적용됩니다. 나누려면 Groq 콘솔에서 새 키를 발급해 Vercel의 `GROQ_API_KEY`를 교체해야 하며 코드로는 할 수 없습니다.
+4. **비용 상한과 경보 (구성됨, 담당자 확인)**: 코드가 아니라 모델 공급자 콘솔과 Vercel에서 설정합니다. 코드는 제한에 걸릴 때 서버 로그에 `rate_limited`만 남깁니다.
 5. 운영용 프롬프트를 쓰면 `CHAT_SYSTEM_PROMPT`를 Production에 추가합니다. 값은 저장소에 적지 않습니다.
 
 ## 공개 상태 (2026-11-24 직접 확인)
@@ -76,7 +79,7 @@ Preview 배포는 사용하지 않습니다(담당자 결정). PR에서는 배�
 | `https://portfolio-chat-<해시>-yeon-cheols-projects.vercel.app` (배포마다 생기는 고유 주소) | Vercel 인증 | 302(첫 화면), 401(API) |
 
 - 이 문서의 이전 판본과 README는 "production 도메인도 인증으로 보호된다"고 적었는데, `portfolio-chat-pi.vercel.app`을 직접 확인하지 않은 추정이었고 틀렸습니다. 위 표가 직접 확인한 값입니다.
-- 따라서 채팅은 누구나 호출할 수 있고, 모델 호출 비용은 이 서비스의 Groq 키(다른 프로젝트와 공유)로 나갑니다. 현재 요청 제한은 인스턴스별 메모리 방식이라 서버리스에서는 약합니다. 위 "해야 할 설정"의 1·3·4번(공유 제한 저장소, 채팅 전용 키, 비용 상한과 경보)이 우선입니다.
+- 따라서 채팅은 누구나 호출할 수 있고, 모델 호출 비용은 이 서비스의 Groq 키로 나갑니다. 2026-11-24 시점에는 키를 다른 프로젝트와 공유했고 요청 제한이 인스턴스별 메모리 방식이라 서버리스에서는 약했습니다. 이후 위 "설정"의 1·4번(공유 제한 저장소, 비용 상한과 경보)을 구성했다는 담당자 확인이 있습니다(2026-11-25). 키는 나누지 않고 공유 상태로 운영하기로 했습니다(담당자 결정). 이 표의 응답 확인은 11월 24일 값이며 그 뒤 설정을 바꾼 뒤에는 다시 확인하지 않았습니다.
 - Vercel의 인증 설정이 어느 주소를 보호하는지는 Vercel 설정에 따라 달라지므로, 이 표는 설정을 바꾸면 다시 확인해야 합니다.
 
 ## 클라이언트 식별 (`x-forwarded-for`)
